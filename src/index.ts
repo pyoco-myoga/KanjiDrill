@@ -83,6 +83,33 @@ function parser(tokens: Token[]): [DisplayType[], string[]] {
     return [question, answer];
 }
 
+
+enum Colors {
+    Black,
+    White,
+    Transparent,
+    Red
+};
+
+function colorToStyle(color: Colors): string {
+    const BlackStyle = "rgba(0, 0, 0, 1.0)";
+    const WhiteStyle = "rgba(255, 255, 255, 1.0)";
+    const TransparentStyle = "rgba(255, 255, 255, 0.0)";
+    const RedStyle = "rgba(255, 0, 0, 1.0)";
+    if (color === Colors.Black) {
+        return BlackStyle;
+    } else if (color === Colors.White) {
+        return WhiteStyle;
+    } else if (color === Colors.Transparent) {
+        return TransparentStyle;
+    } else if (color === Colors.Red) {
+        return RedStyle;
+    } else {
+        // unreachable
+        return BlackStyle;
+    }
+}
+
 const [Width, Height] = [600, 600];
 const NumQuestion = 10;
 const StringPx = 20;
@@ -92,12 +119,39 @@ const RedStyle = "rgba(255, 0, 0, 1.0)";
 const TransparentStyle = "rgba(255, 255, 255, 0.0)";
 
 
-// split question string with "/"
-function splitQuestion(question: string): string[] {
-    return question.split("/");
-}
-
 ((numQuestion: number) => {
+    $("#inputs").append(`
+        <tr>
+            <th scope="row" contenteditable="false">設定</th>
+            <td>
+                <div>
+                    文字色
+                    <select id="question-color" class="form-select">
+                        <option selected value="${Colors.Black}">黒</option>
+                        <option value="${Colors.White}">白</option>
+                        <option value="${Colors.Transparent}">透明</option>
+                    </select>
+                </div>
+                <div>
+                    背景色
+                    <select id="background-color" class="form-select">
+                        <option value="${Colors.Black}">黒</option>
+                        <option value="${Colors.White}">白</option>
+                        <option selected value="${Colors.Transparent}">透明</option>
+                    </select>
+                </div>
+                <div>
+                    解答色
+                    <select id="answer-color" class="form-select">
+                        <option value="${Colors.Black}">黒</option>
+                        <option selected value="${Colors.White}">白</option>
+                        <option value="${Colors.Transparent}">透明</option>
+                    </select>
+                </div>
+            </td>
+        </tr>
+
+                        `)
     for (let i = 1; i <= numQuestion; ++i) {
         $("#inputs").append(`
             <tr>
@@ -115,6 +169,13 @@ $("#download-button").click(() => {
     const context = canvas.getContext("2d")!;
     context.font = `${StringPx}px sans-serif`;
 
+    const questionColor = colorToStyle(parseInt($("#question-color").val() as string));
+    const backgroundColor = colorToStyle(parseInt($("#background-color").val() as string));
+    const answerColor = colorToStyle(parseInt($("#answer-color").val() as string));
+
+    context.fillStyle = backgroundColor;
+    context.fillRect(0, 0, Width, Height);
+
     let positionY = StringPx;
     $("td.question").each((index, element) => {
         const tokens = lexer($(element).text());
@@ -122,14 +183,14 @@ $("#download-button").click(() => {
 
         let startX = 0;
         const questionNumberText = `${index + 1}. `;
-        context.fillStyle = BlackStyle;
+        context.fillStyle = questionColor;
         context.fillText(questionNumberText, startX, positionY);
         startX = context.measureText(questionNumberText).width;
 
         for (let i = 0; i < question.length; ++i) {
             const textWidth = context.measureText(question[i].display).width;
             if (question[i].underline) {
-                context.strokeStyle = BlackStyle;
+                context.strokeStyle = questionColor;
                 context.fillText(question[i].display, startX, positionY);
 
                 context.strokeStyle = RedStyle;
@@ -138,7 +199,7 @@ $("#download-button").click(() => {
                 context.lineTo(startX + textWidth, positionY);
                 context.stroke();
             } else {
-                context.fillStyle = BlackStyle;
+                context.fillStyle = questionColor;
                 context.fillText(question[i].display, startX, positionY);
             }
             startX += textWidth;
@@ -150,7 +211,7 @@ $("#download-button").click(() => {
         const answerSplitText = "   ,   ";
 
         startX = 0;
-        context.fillStyle = BlackStyle;
+        context.fillStyle = questionColor;
         context.fillText(answerStartText, startX, positionY);
         startX = context.measureText(answerStartText).width;
         for (let i = 0; i < answer.length; ++i) {
@@ -162,15 +223,15 @@ $("#download-button").click(() => {
 
             // write
             context.globalCompositeOperation = "source-over";
-            context.fillStyle = WhiteStyle;
+            context.fillStyle = answerColor;
             context.fillText(answer[i], startX, positionY);
             startX += context.measureText(answer[i]).width;
 
-            context.fillStyle = BlackStyle;
+            context.fillStyle = questionColor;
             context.fillText(answerSplitText, startX, positionY);
             startX += context.measureText(answerSplitText).width;
         }
-        context.fillStyle = BlackStyle;
+        context.fillStyle = questionColor;
         context.fillText(answerEndText, startX, positionY);
         startX = context.measureText(answerEndText).width;
 

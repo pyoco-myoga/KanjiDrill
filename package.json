@@ -13,7 +13,7 @@
     "jquery": "^3.6.3"
   },
   "scripts": {
-      "dev": "npx parcel src/index.html --open",
+      "dev": "npx parcel src/index.html -d docs --open",
       "build": "npx parcel build src/index.html -d docs --public-url '/KanjiDrill/'"
   }
 }
